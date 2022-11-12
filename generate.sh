@@ -21,4 +21,17 @@ then
     mkdir output/
 fi
 
-$condaRootPath/envs/$condaEnvName/bin/python3 geocolor.py
+if [ -f geocolor-lock.txt ]
+then
+    pidToCheck=`cat geocolor-lock.txt`
+    if ! kill -0 $pidToCheck
+    then
+        $condaRootPath/envs/$condaEnvName/bin/python3 geocolor.py &
+        echo -n $! > geocolor-lock.txt
+    else
+        echo "GeoColor locked"
+    fi
+else
+    $condaRootPath/envs/$condaEnvName/bin/python3 geocolor.py &
+    echo -n $! > geocolor-lock.txt
+fi

@@ -8,15 +8,23 @@ from matplotlib import pyplot as plt
 import numpy as np
 from cartopy import crs as ccrs
 from cartopy import feature as cfeat
-from metpy.plots import USCOUNTIES
 import metpy
-from os import path
+from os import path, system, remove
 import pandas as pd
 from siphon.catalog import TDSCatalog
 from os import path
 from pathlib import Path
 from datetime import datetime as dt, timedelta
 import json
+import atexit
+from time import sleep
+
+@atexit.register
+def exitFunc():
+    print("sleeping")
+    sleep(15)
+    remove("geocolor-lock.txt")
+    system("bash generate.sh &")
 
 basePath = path.dirname(path.abspath(__file__))
 if path.exists(path.join(basePath, "HDWX_helpers.py")):
@@ -27,18 +35,24 @@ else:
 
 def plotSat():
     # Get the satellite data
-    dataAvail = TDSCatalog("https://thredds.ucar.edu/thredds/catalog/satellite/goes/east/products/GeoColor/CONUS/Channel01/current/catalog.xml").datasets[-1].name.split("_")[3]
-    latestTimeAvailable = dt.strptime(dataAvail, "s%Y%j%H%M170")
+    dataAvail = TDSCatalog("https://thredds.ucar.edu/thredds/catalog/satellite/goes/east/products/GeoColor/CONUS/Channel01/current/catalog.xml").datasets[-1]
+    dataAvail2 = TDSCatalog("https://thredds.ucar.edu/thredds/catalog/satellite/goes/east/products/GeoColor/CONUS/Channel02/current/catalog.xml").datasets[-1]
+    dataAvail3 = TDSCatalog("https://thredds.ucar.edu/thredds/catalog/satellite/goes/east/products/GeoColor/CONUS/Channel03/current/catalog.xml").datasets[-1]
+    if dataAvail.name.split("_")[3] != dataAvail2.name.split("_")[3] or dataAvail.name.split("_")[3] != dataAvail3.name.split("_")[3]:
+        print("De-sync detected, waiting")
+        exit()
+    latestTimeAvailable = dt.strptime(dataAvail.name.split("_")[3], "s%Y%j%H%M170")
     outputMetadataPath = path.join(basePath, "output", "metadata", "products", "5", latestTimeAvailable.strftime("%Y%m%d%H00") + ".json")
     if path.exists(outputMetadataPath):
         with open(outputMetadataPath, "r") as f:
             currentRunMetadata = json.load(f)
         lastPlottedTime = dt.strptime(currentRunMetadata["productFrames"][-1]["valid"], "%Y%m%d%H%M")
         if lastPlottedTime >= latestTimeAvailable:
+            print("Nothing to do")
             exit()
-    channel01 = TDSCatalog("https://thredds.ucar.edu/thredds/catalog/satellite/goes/east/products/GeoColor/CONUS/Channel01/current/catalog.xml").datasets[-1].remote_access(use_xarray=True)
-    channel02 = TDSCatalog("https://thredds.ucar.edu/thredds/catalog/satellite/goes/east/products/GeoColor/CONUS/Channel02/current/catalog.xml").datasets[-1].remote_access(use_xarray=True)
-    channel03 = TDSCatalog("https://thredds.ucar.edu/thredds/catalog/satellite/goes/east/products/GeoColor/CONUS/Channel03/current/catalog.xml").datasets[-1].remote_access(use_xarray=True)
+    channel01 = dataAvail.remote_access(use_xarray=True)
+    channel02 = dataAvail2.remote_access(use_xarray=True)
+    channel03 = dataAvail3.remote_access(use_xarray=True)
     print("Download complete!")
     blue = channel01.Sectorized_CMI.data
     red = channel02.Sectorized_CMI.data
@@ -63,7 +77,8 @@ def plotSat():
     fig.savefig(outputPath)
     if hasHelpers:
         HDWX_helpers.writeJson(path.abspath(path.dirname(__file__)), 5, runTime=(validTime - timedelta(minutes=validTime.minute)), fileName=validTime.strftime("%M.png"), validTime=validTime, gisInfo=["0,0", "0,0"], reloadInterval=60)
-
+    plt.close(fig)
+    print("Done!")
 
 
 if __name__ == "__main__":
