@@ -35,3 +35,8 @@ else
     $condaRootPath/envs/$condaEnvName/bin/python3 geocolor.py &
     echo -n $! > geocolor-lock.txt
 fi
+if [ "$1" != "--no-cleanup" ]
+then
+    echo "Cleaning..."
+    $condaRootPath/envs/$condaEnvName/bin/python3 cleanup.py
+fi

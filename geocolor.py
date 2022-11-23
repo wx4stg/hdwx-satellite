@@ -21,10 +21,9 @@ from time import sleep
 
 @atexit.register
 def exitFunc():
-    print("sleeping")
     sleep(15)
     remove("geocolor-lock.txt")
-    system("bash generate.sh &")
+    system("bash generate.sh --no-cleanup &")
 
 basePath = path.dirname(path.abspath(__file__))
 if path.exists(path.join(basePath, "HDWX_helpers.py")):
@@ -39,7 +38,6 @@ def plotSat():
     dataAvail2 = TDSCatalog("https://thredds.ucar.edu/thredds/catalog/satellite/goes/east/products/GeoColor/CONUS/Channel02/current/catalog.xml").datasets[-1]
     dataAvail3 = TDSCatalog("https://thredds.ucar.edu/thredds/catalog/satellite/goes/east/products/GeoColor/CONUS/Channel03/current/catalog.xml").datasets[-1]
     if dataAvail.name.split("_")[3] != dataAvail2.name.split("_")[3] or dataAvail.name.split("_")[3] != dataAvail3.name.split("_")[3]:
-        print("De-sync detected, waiting")
         exit()
     latestTimeAvailable = dt.strptime(dataAvail.name.split("_")[3], "s%Y%j%H%M170")
     outputMetadataPath = path.join(basePath, "output", "metadata", "products", "5", latestTimeAvailable.strftime("%Y%m%d%H00") + ".json")
@@ -48,12 +46,10 @@ def plotSat():
             currentRunMetadata = json.load(f)
         lastPlottedTime = dt.strptime(currentRunMetadata["productFrames"][-1]["valid"], "%Y%m%d%H%M")
         if lastPlottedTime >= latestTimeAvailable:
-            print("Nothing to do")
             exit()
     channel01 = dataAvail.remote_access(use_xarray=True)
     channel02 = dataAvail2.remote_access(use_xarray=True)
     channel03 = dataAvail3.remote_access(use_xarray=True)
-    print("Download complete!")
     blue = channel01.Sectorized_CMI.data
     red = channel02.Sectorized_CMI.data
     green = channel03.Sectorized_CMI.data
@@ -78,7 +74,6 @@ def plotSat():
     if hasHelpers:
         HDWX_helpers.writeJson(path.abspath(path.dirname(__file__)), 5, runTime=(validTime - timedelta(minutes=validTime.minute)), fileName=validTime.strftime("%M.png"), validTime=validTime, gisInfo=["0,0", "0,0"], reloadInterval=60)
     plt.close(fig)
-    print("Done!")
 
 
 if __name__ == "__main__":
