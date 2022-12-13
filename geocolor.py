@@ -25,6 +25,7 @@ def exitFunc():
     remove("geocolor-lock.txt")
     system("bash generate.sh --no-cleanup &")
 
+axExtent = [-130, -60, 20, 50]
 basePath = path.dirname(path.abspath(__file__))
 if path.exists(path.join(basePath, "HDWX_helpers.py")):
     import HDWX_helpers
@@ -58,12 +59,13 @@ def plotSat():
     
     cfmetadata = channel01.metpy.parse_cf("Sectorized_CMI")
     satProj = cfmetadata.metpy.cartopy_crs
+    mapProj = ccrs.epsg(3857)
     img_extent = [cfmetadata.x.min(), cfmetadata.x.max(), cfmetadata.y.min(), cfmetadata.y.max()]
     validTime = pd.to_datetime(cfmetadata.time.data)
 
     fig = plt.figure()
     ax = plt.axes(projection=satProj)
-    ax.imshow(pngdata, transform=satProj, interpolation="none", extent=img_extent)
+    ax.imshow(pngdata, transform=satProj, extent=img_extent)
     ax.add_feature(cfeat.COASTLINE.with_scale("50m"), linewidth=1, edgecolor="black", zorder=10)
     ax.add_feature(cfeat.STATES.with_scale("50m"), linewidth=0.5, edgecolor="black")
     outputPath = path.join(basePath, "output", "products", "satellite", "goes16", "geocolor", validTime.strftime("%Y"), validTime.strftime("%m"), validTime.strftime("%d"), validTime.strftime("%H00"), validTime.strftime("%M.png"))
@@ -72,8 +74,26 @@ def plotSat():
         HDWX_helpers.dressImage(fig, ax, "GOES-16 CONUS GeoColor", validTime, notice="GeoColor developed by NOAA/CIRA", width=3840, height=2160)
     fig.savefig(outputPath)
     if hasHelpers:
-        HDWX_helpers.writeJson(path.abspath(path.dirname(__file__)), 5, runTime=(validTime - timedelta(minutes=validTime.minute)), fileName=validTime.strftime("%M.png"), validTime=validTime, gisInfo=["0,0", "0,0"], reloadInterval=60)
+        HDWX_helpers.writeJson(path.abspath(path.dirname(__file__)), 5, runTime=(validTime - timedelta(minutes=validTime.minute)), fileName=validTime.strftime("%M.png"), validTime=validTime, gisInfo=["0,0", "0,0"], reloadInterval=270)
     plt.close(fig)
+
+
+    gisFig = plt.figure()
+    gisAx = plt.axes(projection=mapProj)
+    gisAx.set_extent(axExtent, crs=ccrs.PlateCarree())
+    gisAx.imshow(pngdata, transform=satProj, interpolation="none", extent=img_extent)
+    gisOutputPath = path.join(basePath, "output", "gisproducts", "satellite", "goes16", "geocolor", validTime.strftime("%Y"), validTime.strftime("%m"), validTime.strftime("%d"), validTime.strftime("%H00"), validTime.strftime("%M.png"))
+
+
+    Path(path.dirname(gisOutputPath)).mkdir(parents=True, exist_ok=True)
+    gisAx.set_position([0, 0, 1, 1])
+    px = 1/plt.rcParams["figure.dpi"]
+    gisFig.set_size_inches(3840*px, 2160*px)
+    extent = gisAx.get_tightbbox(gisFig.canvas.get_renderer()).transformed(gisFig.dpi_scale_trans.inverted())
+    gisFig.savefig(gisOutputPath, transparent=True, bbox_inches=extent)
+    if hasHelpers:
+        HDWX_helpers.writeJson(path.abspath(path.dirname(__file__)), 4, runTime=(validTime - timedelta(minutes=validTime.minute)), fileName=validTime.strftime("%M.png"), validTime=validTime, gisInfo=["0,0", "0,0"], reloadInterval=270)
+
 
 
 if __name__ == "__main__":
