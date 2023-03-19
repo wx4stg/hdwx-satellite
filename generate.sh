@@ -21,6 +21,8 @@ then
     mkdir output/
 fi
 
+$condaRootPath/envs/$condaEnvName/bin/python3 check-sat-dead.py
+
 if [ -f geocolor-lock.txt ]
 then
     pidToCheck=`cat geocolor-lock.txt`
