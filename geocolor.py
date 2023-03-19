@@ -72,9 +72,11 @@ def plotSat():
     Path(path.dirname(outputPath)).mkdir(parents=True, exist_ok=True)
     if hasHelpers:
         HDWX_helpers.dressImage(fig, ax, "GOES-16 CONUS GeoColor", validTime, notice="GeoColor developed by NOAA/CIRA", width=3840, height=2160)
-    fig.savefig(outputPath)
     if hasHelpers:
+        HDWX_helpers.saveImage(fig, outputPath)
         HDWX_helpers.writeJson(path.abspath(path.dirname(__file__)), 5, runTime=(validTime - timedelta(minutes=validTime.minute)), fileName=validTime.strftime("%M.png"), validTime=validTime, gisInfo=["0,0", "0,0"], reloadInterval=270)
+    else:
+        fig.savefig(outputPath)
     plt.close(fig)
 
 
