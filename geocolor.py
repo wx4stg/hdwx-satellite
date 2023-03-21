@@ -40,7 +40,7 @@ def plotSat():
     dataAvail3 = TDSCatalog("https://thredds.ucar.edu/thredds/catalog/satellite/goes/east/products/GeoColor/CONUS/Channel03/current/catalog.xml").datasets[-1]
     if dataAvail.name.split("_")[3] != dataAvail2.name.split("_")[3] or dataAvail.name.split("_")[3] != dataAvail3.name.split("_")[3]:
         exit()
-    latestTimeAvailable = dt.strptime(dataAvail.name.split("_")[3], "s%Y%j%H%M170")
+    latestTimeAvailable = dt.strptime(dataAvail.name.split("_")[3][:-3], "s%Y%j%H%M")
     outputMetadataPath = path.join(basePath, "output", "metadata", "products", "5", latestTimeAvailable.strftime("%Y%m%d%H00") + ".json")
     if path.exists(outputMetadataPath):
         with open(outputMetadataPath, "r") as f:
