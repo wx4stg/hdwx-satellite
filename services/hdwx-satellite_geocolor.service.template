@@ -1,0 +1,16 @@
+[Unit]
+Description=hdwx-satellite_geocolor
+PartOf=hdwx.target
+
+[Service]
+ExecStart=$pathToPython geocolor.py
+ExecStop=rsync -ulrH ./output/. $targetDir --exclude=productTypes/ --exclude="*.tmp"
+Restart=always
+RestartSec=30
+RuntimeMaxSec=600
+WorkingDirectory=$pathToClone/hdwx-satellite/
+User=$myUsername
+SyslogIdentifier=hdwx-satellite_geocolor
+
+[Install]
+WantedBy=hdwx.target

@@ -9,21 +9,13 @@ import numpy as np
 from cartopy import crs as ccrs
 from cartopy import feature as cfeat
 import metpy
-from os import path, system, remove
+from os import path
 import pandas as pd
 from siphon.catalog import TDSCatalog
 from os import path
 from pathlib import Path
 from datetime import datetime as dt, timedelta
 import json
-import atexit
-from time import sleep
-
-@atexit.register
-def exitFunc():
-    sleep(15)
-    remove("geocolor-lock.txt")
-    system("bash generate.sh --no-cleanup &")
 
 axExtent = [-130, -60, 20, 50]
 basePath = path.dirname(path.abspath(__file__))
