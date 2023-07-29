@@ -16,6 +16,7 @@ from os import path
 from pathlib import Path
 from datetime import datetime as dt, timedelta
 import json
+import sys
 
 axExtent = [-130, -60, 20, 50]
 basePath = path.dirname(path.abspath(__file__))
@@ -71,22 +72,22 @@ def plotSat():
         fig.savefig(outputPath)
     plt.close(fig)
 
+    if "--no-gis" not in sys.argv:
+        gisFig = plt.figure()
+        gisAx = plt.axes(projection=mapProj)
+        gisAx.set_extent(axExtent, crs=ccrs.PlateCarree())
+        gisAx.imshow(pngdata, transform=satProj, interpolation="none", extent=img_extent)
+        gisOutputPath = path.join(basePath, "output", "gisproducts", "satellite", "goes16", "geocolor", validTime.strftime("%Y"), validTime.strftime("%m"), validTime.strftime("%d"), validTime.strftime("%H00"), validTime.strftime("%M.png"))
 
-    gisFig = plt.figure()
-    gisAx = plt.axes(projection=mapProj)
-    gisAx.set_extent(axExtent, crs=ccrs.PlateCarree())
-    gisAx.imshow(pngdata, transform=satProj, interpolation="none", extent=img_extent)
-    gisOutputPath = path.join(basePath, "output", "gisproducts", "satellite", "goes16", "geocolor", validTime.strftime("%Y"), validTime.strftime("%m"), validTime.strftime("%d"), validTime.strftime("%H00"), validTime.strftime("%M.png"))
 
-
-    Path(path.dirname(gisOutputPath)).mkdir(parents=True, exist_ok=True)
-    gisAx.set_position([0, 0, 1, 1])
-    px = 1/plt.rcParams["figure.dpi"]
-    gisFig.set_size_inches(3840*px, 2160*px)
-    extent = gisAx.get_tightbbox(gisFig.canvas.get_renderer()).transformed(gisFig.dpi_scale_trans.inverted())
-    gisFig.savefig(gisOutputPath, transparent=True, bbox_inches=extent)
-    if hasHelpers:
-        HDWX_helpers.writeJson(path.abspath(path.dirname(__file__)), 4, runTime=(validTime - timedelta(minutes=validTime.minute)), fileName=validTime.strftime("%M.png"), validTime=validTime, gisInfo=["0,0", "0,0"], reloadInterval=270)
+        Path(path.dirname(gisOutputPath)).mkdir(parents=True, exist_ok=True)
+        gisAx.set_position([0, 0, 1, 1])
+        px = 1/plt.rcParams["figure.dpi"]
+        gisFig.set_size_inches(3840*px, 2160*px)
+        extent = gisAx.get_tightbbox(gisFig.canvas.get_renderer()).transformed(gisFig.dpi_scale_trans.inverted())
+        gisFig.savefig(gisOutputPath, transparent=True, bbox_inches=extent)
+        if hasHelpers:
+            HDWX_helpers.writeJson(path.abspath(path.dirname(__file__)), 4, runTime=(validTime - timedelta(minutes=validTime.minute)), fileName=validTime.strftime("%M.png"), validTime=validTime, gisInfo=["0,0", "0,0"], reloadInterval=270)
 
 
 

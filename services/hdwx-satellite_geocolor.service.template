@@ -3,7 +3,7 @@ Description=hdwx-satellite_geocolor
 PartOf=hdwx.target
 
 [Service]
-ExecStart=$pathToPython geocolor.py
+ExecStart=$pathToPython geocolor.py $shouldGIS
 ExecStop=rsync -ulrH ./output/. $targetDir --exclude=productTypes/ --exclude="*.tmp"
 Restart=always
 RestartSec=30
