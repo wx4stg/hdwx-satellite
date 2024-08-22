@@ -68,11 +68,14 @@ def plotSat():
     lat[np.abs(lat) == np.inf] = -99
     lat[np.abs(lat) == -99] = np.nanmax(lat)
     
+    lon = coords.centers_to_edges_2d(lon)
+    lat = coords.centers_to_edges_2d(lat)
+
     validTime = dt.strptime(channel01.start_date_time, '%Y%j%H%M%S')
 
     fig = plt.figure()
     ax = plt.axes(projection=ccrs.PlateCarree())
-    ax.pcolormesh(lon, lat, pngdata, transform=ccrs.PlateCarree())
+    ax.pcolorfast(lon, lat, pngdata, transform=ccrs.PlateCarree())
     ax.add_feature(cfeat.COASTLINE.with_scale("50m"), linewidth=1, edgecolor="black", zorder=10)
     ax.add_feature(cfeat.STATES.with_scale("50m"), linewidth=0.5, edgecolor="black")
     px = 1/plt.rcParams["figure.dpi"]
@@ -94,7 +97,7 @@ def plotSat():
         gisFig = plt.figure()
         gisAx = plt.axes(projection=ccrs.PlateCarree())
         gisAx.set_extent(axExtent, crs=ccrs.PlateCarree())
-        gisAx.pcolormesh(lon, lat, pngdata, transform=ccrs.PlateCarree())
+        gisAx.pcolorfast(lon, lat, pngdata, transform=ccrs.PlateCarree())
         gisOutputPath = path.join(basePath, "output", "gisproducts", "satellite", "goes16", "geocolor", validTime.strftime("%Y"), validTime.strftime("%m"), validTime.strftime("%d"), validTime.strftime("%H00"), validTime.strftime("%M.png"))
 
 
